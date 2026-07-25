@@ -37,9 +37,10 @@ st.markdown("""
 @st.cache_resource
 def load_models():
     import urllib.request
+    import joblib
     
-    local_path = os.path.expanduser('~/Desktop/football-intelligence/data/advanced_model.pkl')
-    cloud_path = './data/advanced_model.pkl'
+    local_path = os.path.expanduser('~/Desktop/football-intelligence/data/advanced_model_joblib.pkl')
+    cloud_path = './data/advanced_model_joblib.pkl'
     
     if os.path.exists(local_path):
         pkl_path = local_path
@@ -48,12 +49,11 @@ def load_models():
         pkl_path = cloud_path
         if not os.path.exists(pkl_path):
             st.info("⏳ Chargement du modèle en cours...")
-            file_id = "1dQK70E_8jm0SwlSWbryGLNjlUFaXa9xt"
+            file_id = "1UjkYatGiy_l_XEJI4jgZpYZnHiQkfEc7"
             url = f"https://drive.google.com/uc?export=download&id={file_id}"
             urllib.request.urlretrieve(url, pkl_path)
     
-    with open(pkl_path, 'rb') as f:
-        return pickle.load(f)
+    return joblib.load(pkl_path)
 data = load_models()
 players_top5 = data['players_top5']
 clubs_top5 = data['clubs_top5']
