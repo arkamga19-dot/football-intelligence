@@ -49,9 +49,9 @@ def load_models():
         pkl_path = cloud_path
         if not os.path.exists(pkl_path):
             st.info("⏳ Chargement du modèle en cours...")
-            file_id = "1UjkYatGiy_l_XEJI4jgZpYZnHiQkfEc7"
-            url = f"https://drive.google.com/uc?export=download&id={file_id}"
-            urllib.request.urlretrieve(url, pkl_path)
+            import gdown
+file_id = "1UjkYatGiy_l_XEJI4jgZpYZnHiQkfEc7"
+gdown.download(f"https://drive.google.com/uc?id={file_id}", pkl_path, quiet=False)
     
     return joblib.load(pkl_path)
 data = load_models()
