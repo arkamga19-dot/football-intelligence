@@ -33,14 +33,27 @@ st.markdown("""
 
 # ============================================
 # CHARGEMENT MODÈLES
-# ============================================
+# ===========================================
 @st.cache_resource
 def load_models():
-    data_path = os.path.expanduser('~/Desktop/football-intelligence/data/')
-    with open(data_path + 'advanced_model.pkl', 'rb') as f:
-        advanced = pickle.load(f)
-    return advanced
-
+    import urllib.request
+    
+    local_path = os.path.expanduser('~/Desktop/football-intelligence/data/advanced_model.pkl')
+    cloud_path = './data/advanced_model.pkl'
+    
+    if os.path.exists(local_path):
+        pkl_path = local_path
+    else:
+        os.makedirs('./data', exist_ok=True)
+        pkl_path = cloud_path
+        if not os.path.exists(pkl_path):
+            st.info("⏳ Chargement du modèle en cours...")
+            file_id = "1dQK70E_8jm0SwlSWbryGLNjlUFaXa9xt"
+            url = f"https://drive.google.com/uc?export=download&id={file_id}"
+            urllib.request.urlretrieve(url, pkl_path)
+    
+    with open(pkl_path, 'rb') as f:
+        return pickle.load(f)
 data = load_models()
 players_top5 = data['players_top5']
 clubs_top5 = data['clubs_top5']
