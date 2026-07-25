@@ -4,6 +4,7 @@ import numpy as np
 import pickle
 import os
 import plotly.graph_objects as go
+import joblib
 
 st.set_page_config(page_title="Football Intelligence", page_icon="⚽", layout="wide")
 
@@ -31,29 +32,25 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# ============================================
-# CHARGEMENT MODÈLES
-# ===========================================
+
 @st.cache_resource
 def load_models():
-    import urllib.request
-    import joblib
-    
+    import gdown
     local_path = os.path.expanduser('~/Desktop/football-intelligence/data/advanced_model_joblib.pkl')
     cloud_path = './data/advanced_model_joblib.pkl'
-    
+
     if os.path.exists(local_path):
-        pkl_path = local_path
-    else:
-        os.makedirs('./data', exist_ok=True)
-        pkl_path = cloud_path
-        if not os.path.exists(pkl_path):
-            st.info("⏳ Chargement du modèle en cours...")
-            import gdown
-file_id = "1UjkYatGiy_l_XEJI4jgZpYZnHiQkfEc7"
-gdown.download(f"https://drive.google.com/uc?id={file_id}", pkl_path, quiet=False)
-    
-    return joblib.load(pkl_path)
+        return joblib.load(local_path)
+
+    os.makedirs('./data', exist_ok=True)
+    if not os.path.exists(cloud_path):
+        st.info("⏳ Chargement du modèle en cours...")
+        file_id = "1UjkYatGiy_l_XEJI4jgZpYZnHiQkfEc7"
+        gdown.download(f"https://drive.google.com/uc?id={file_id}", cloud_path, quiet=False)
+
+    return joblib.load(cloud_path)
+
+
 data = load_models()
 players_top5 = data['players_top5']
 clubs_top5 = data['clubs_top5']
@@ -78,9 +75,7 @@ position_icons = {
 }
 trend_icons = {'hausse': '📈', 'baisse': '📉', 'stable': '➡️'}
 
-# ============================================
-# FONCTION RECOMMANDATION AVANCÉE
-# ============================================
+
 def recommend_clubs_advanced(player_name, top_n=5):
     player_data = players_top5[players_top5['name_player'].str.lower().str.contains(player_name.lower())]
     if player_data.empty:
@@ -159,6 +154,7 @@ def recommend_clubs_advanced(player_name, top_n=5):
 
     return results, player_data, trending, trending_pct
 
+
 def get_player_scores(player_row):
     experience = min(player_row.get('total_appearances', 50) / 200, 1)
     return [
@@ -169,9 +165,7 @@ def get_player_scores(player_row):
         round(experience * 100)
     ]
 
-# ============================================
-# SIDEBAR
-# ============================================
+
 with st.sidebar:
     st.markdown("## ⚽ Football Intelligence")
     st.divider()
@@ -190,9 +184,7 @@ with st.sidebar:
     for name in league_names.values():
         st.markdown(name)
 
-# ============================================
-# PAGE 1 — RECHERCHE JOUEUR
-# ============================================
+
 if page == "🔍 Recherche Joueur":
     st.markdown("""
     <div style='text-align:center; padding:20px 0'>
@@ -252,7 +244,7 @@ if page == "🔍 Recherche Joueur":
                     """, unsafe_allow_html=True)
 
             with right:
-                st.markdown("### 📊 Détail des scores")
+                st.markdown("### 📊 Compatibilité")
                 scores = [round(r['final_score'] * 100, 1) for r in results]
                 names = [' '.join(r['name'].split()[:2]) for r in results]
                 colors = [league_colors.get(r['league'], '#1a73e8') for r in results]
@@ -271,8 +263,7 @@ if page == "🔍 Recherche Joueur":
                 )
                 st.plotly_chart(fig, use_container_width=True)
 
-                # Radar scores ML
-                st.markdown("### 🕸️ Profil du joueur")
+                st.markdown("### 🕸️ Profil")
                 values_pct = get_player_scores(player_row)
                 categories = ['Offensif', 'Régularité', 'Discipline', 'Potentiel', 'Expérience']
                 fig2 = go.Figure(go.Scatterpolar(
@@ -293,8 +284,6 @@ if page == "🔍 Recherche Joueur":
                 st.plotly_chart(fig2, use_container_width=True)
 
             st.divider()
-
-            # Explication des critères
             st.markdown("### 🧠 Critères de prédiction utilisés")
             c1, c2, c3, c4 = st.columns(4)
             with c1:
@@ -307,7 +296,7 @@ if page == "🔍 Recherche Joueur":
                 st.markdown("#### 💰 Valeur marchande (30%)")
                 st.markdown("La valeur du joueur est-elle cohérente avec le niveau financier du club ?")
             with c4:
-                st.markdown("#### 📈 Trending (15%)")
+                st.markdown(f"#### 📈 Trending (15%)")
                 st.markdown(f"Valeur en **{trending}** ({trending_pct:+.1f}%) sur les 6 derniers mois")
 
             st.divider()
@@ -334,11 +323,9 @@ if page == "🔍 Recherche Joueur":
         c1.metric("👥 Joueurs Top 5", f"{len(players_top5):,}")
         c2.metric("🏟️ Clubs", f"{len(clubs_top5)}")
         c3.metric("🌍 Ligues", "5")
-        c4.metric("📊 Apparences", "708,901")
+        c4.metric("📊 Apparences", "1,894,350")
 
-# ============================================
-# PAGE 2 — CLASSEMENT
-# ============================================
+
 elif page == "🏆 Classement Top 5 Ligues":
     st.markdown("""
     <div style='text-align:center; padding:20px 0'>
@@ -420,9 +407,7 @@ elif page == "🏆 Classement Top 5 Ligues":
         display_df.index += 1
         st.dataframe(display_df, use_container_width=True, height=420)
 
-# ============================================
-# PAGE 3 — COMPARAISON
-# ============================================
+
 elif page == "⚖️ Comparaison Joueurs":
     st.markdown("""
     <div style='text-align:center; padding:20px 0'>
@@ -539,5 +524,5 @@ elif page == "⚖️ Comparaison Joueurs":
     else:
         st.info("👆 Entre les noms de 2 joueurs et clique sur Comparer !")
         st.markdown("### 💡 Exemples")
-        for p1, p2 in [("Kylian Mbappé", "Erling Haaland"), ("Toni Kroos", "Luka Modric"), ("Virgil van Dijk", "Marquinhos")]:
+        for p1, p2 in [("Kylian Mbappé", "Erling Haaland"), ("Vinicius Junior", "Jude Bellingham"), ("Virgil van Dijk", "Marquinhos")]:
             st.markdown(f"- **{p1}** vs **{p2}**")
